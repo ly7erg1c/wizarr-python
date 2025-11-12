@@ -117,8 +117,9 @@ python wizarr_client.py --api-key YOUR_API_KEY --config config.json
 - `--base-url`: Base URL of the Wizarr API (default: https://invite.rarbg.zip)
 
 #### Output Options
-- `--output`: Output file path for results (JSON format)
+- `--output`: Output file path for results (URLs by default, JSON if `--verbose` is used)
 - `--quiet`: Suppress progress output
+- `--verbose`: Output detailed JSON results instead of just invitation URLs (default: URLs only)
 
 ## API Reference
 
@@ -165,17 +166,31 @@ python wizarr_client.py \
   --allow-downloads
 ```
 
-### Example 4: Save results to file
+### Example 4: Save invitation URLs to file
 
 ```bash
 python wizarr_client.py \
   --api-key YOUR_API_KEY \
   --count 20 \
   --server-ids 1 \
-  --output results.json
+  --output urls.txt
 ```
 
-### Example 5: Using configuration file
+This will save one URL per line to `urls.txt`.
+
+### Example 5: Get detailed JSON output
+
+```bash
+python wizarr_client.py \
+  --api-key YOUR_API_KEY \
+  --count 5 \
+  --server-ids 1 \
+  --verbose
+```
+
+Use `--verbose` to get the full JSON response with all invitation details.
+
+### Example 6: Using configuration file
 
 Create `batch_config.json`:
 
@@ -201,7 +216,21 @@ python wizarr_client.py --api-key YOUR_API_KEY --config batch_config.json --outp
 
 ## Output Format
 
-The tool outputs JSON with the following structure:
+### Default Output (URLs Only)
+
+By default, the tool outputs only the invitation URLs, one per line:
+
+```
+http://invite.rarbg.zip/j/7D21B2BK5Z
+http://invite.rarbg.zip/j/8E32C3CL6A
+http://invite.rarbg.zip/j/9F43D4DM7B
+```
+
+This makes it easy to pipe the output or save to a file for further processing.
+
+### Verbose Output (Full JSON)
+
+With the `--verbose` flag, the tool outputs detailed JSON with the following structure:
 
 ```json
 {
@@ -212,7 +241,15 @@ The tool outputs JSON with the following structure:
       "data": {
         "message": "Invitation created successfully",
         "invitation": {
-          // Invitation details from API
+          "id": 11,
+          "code": "7D21B2BK5Z",
+          "url": "http://invite.rarbg.zip/j/7D21B2BK5Z",
+          "expires": "2025-11-19T23:51:34.804997",
+          "duration": "90",
+          "unlimited": false,
+          "display_name": "Plex",
+          "server_names": ["Plex"],
+          "uses_global_setting": false
         }
       }
     }

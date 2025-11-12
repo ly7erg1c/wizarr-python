@@ -24,6 +24,9 @@ class WizarrClient:
     """
     
     def __init__(self, base_url: str = "https://invite.rarbg.zip", api_key: str = None):
+        # Add https:// scheme if not provided
+        if not base_url.startswith(('http://', 'https://')):
+            base_url = f'https://{base_url}'
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
         self.session = requests.Session()
@@ -176,16 +179,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Create 5 invitations with default settings
+  # Create 5 invitations (outputs only URLs by default)
   python wizarr_client.py --api-key YOUR_KEY --count 5 --server-ids 1 2
 
-  # Create invitations with specific options
+  # Create invitations with detailed JSON output
   python wizarr_client.py --api-key YOUR_KEY --count 10 \\
     --server-ids 1 --expires-in-days 7 --duration 30 \\
-    --allow-downloads --allow-live-tv
+    --allow-downloads --allow-live-tv --verbose
 
   # Create invitations from JSON config file
   python wizarr_client.py --api-key YOUR_KEY --config config.json
+
+  # Save only URLs to a file
+  python wizarr_client.py --api-key YOUR_KEY --count 5 \\
+    --server-ids 1 --output urls.txt
         """
     )
     
@@ -268,12 +275,17 @@ Examples:
     # Output options
     parser.add_argument(
         '--output',
-        help='Output file path for results (JSON format)'
+        help='Output file path for results'
     )
     parser.add_argument(
         '--quiet',
         action='store_true',
         help='Suppress progress output'
+    )
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        help='Output detailed JSON results instead of just invitation URLs'
     )
     
     args = parser.parse_args()
@@ -330,15 +342,38 @@ Examples:
     )
     
     # Output results
-    output = json.dumps(result, indent=2)
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            f.write(output)
-        if not args.quiet:
-            print(f"\nResults saved to {args.output}", file=sys.stderr)
+    if args.verbose:
+        # Output full JSON structure
+        output = json.dumps(result, indent=2)
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(output)
+            if not args.quiet:
+                print(f"\nResults saved to {args.output}", file=sys.stderr)
+        else:
+            print(output)
     else:
-        print(output)
+        # Output only invitation URLs (one per line)
+        urls = []
+        for res in result['results']:
+            if res['success'] and 'invitation' in res['data']:
+                invitation = res['data']['invitation']
+                if 'url' in invitation:
+                    urls.append(invitation['url'])
+        
+        output = '\n'.join(urls)
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(output)
+                if urls:
+                    f.write('\n')  # Add trailing newline
+            if not args.quiet:
+                print(f"\n{len(urls)} invitation URL(s) saved to {args.output}", file=sys.stderr)
+        else:
+            if urls:
+                print(output)
     
     # Exit with error code if any failures
     if result['failed'] > 0:
