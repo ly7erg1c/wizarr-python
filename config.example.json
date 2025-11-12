@@ -1,0 +1,12 @@
+{
+  "count": 10,
+  "server_ids": [1],
+  "expires_in_days": 7,
+  "duration": "unlimited",
+  "unlimited": true,
+  "library_ids": [1, 2],
+  "allow_downloads": false,
+  "allow_live_tv": false,
+  "allow_mobile_uploads": false
+}
+
